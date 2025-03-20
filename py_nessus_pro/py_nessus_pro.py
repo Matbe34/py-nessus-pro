@@ -19,15 +19,6 @@ class PyNessusPro:
     scans = []
 
     def __init__(self, nessus_server: str, username: str, password: str, log_level: str = "warning"):
-        if log_level:
-            if log_level in ["debug", "info", "success", "warning", "warn", "error", "critical"]:
-                logger.remove()
-                logger.add(sys.stderr, level = log_level.upper())
-
-            else:
-                logger.info("Invalid log level. log_level must be one of the following: [debug, info, success, warning, warn, error, critical]")
-                logger.error("Invalid log level, using default (warning)")
-
         self.nessus_server = nessus_server if not self.nessus_server else self.nessus_server
         if not self.headers:
             self.headers = {

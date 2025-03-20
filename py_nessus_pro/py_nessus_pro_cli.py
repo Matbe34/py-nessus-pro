@@ -2,10 +2,25 @@ import typer
 from typing import Optional
 from typing_extensions import Annotated
 import os
+import sys
+from loguru import logger
 
 from py_nessus_pro.py_nessus_pro import PyNessusPro
 
 app = typer.Typer()
+
+def configure_logger(log_level: str):
+    """Configure logger with specified log level"""
+    if log_level in ["debug", "info", "success", "warning", "warn", "error", "critical"]:
+        logger.remove()
+        logger.add(sys.stderr, level=log_level.upper())
+        return True
+    else:
+        logger.info("Invalid log level. log_level must be one of the following: [debug, info, success, warning, warn, error, critical]")
+        logger.error("Invalid log level, using default (warning)")
+        logger.remove()
+        logger.add(sys.stderr, level="WARNING")
+        return False
 
 def nessus_login(server_ip: str, username: str, verbose: Optional[bool] = typer.Option(False, "--verbose", "-v", help="Verbose output")):
     if server_ip and username:
@@ -13,7 +28,8 @@ def nessus_login(server_ip: str, username: str, verbose: Optional[bool] = typer.
         password = typer.prompt("Password", hide_input=True)
         """Create a Nessus object"""
         log_level = "debug" if verbose else "warning"
-        nessus = PyNessusPro(server_ip, username, password, log_level = log_level)
+        configure_logger(log_level)
+        nessus = PyNessusPro(server_ip, username, password, log_level=log_level)
         return nessus
     else:
         typer.echo("[!] No server ip or username provided", color=typer.colors.RED)
