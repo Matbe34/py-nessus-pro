@@ -19,6 +19,12 @@ class PyNessusPro:
     scans = {}
 
     def __init__(self, nessus_server: str, username: str, password: str, log_level: str = "warning"):
+        
+        self.headers = {}
+        self.folder_map = {}
+        self.policy_map = {}
+        self.scans = []
+        
         self.nessus_server = nessus_server if not self.nessus_server else self.nessus_server
         if not self.headers:
             self.headers = {
