@@ -23,7 +23,7 @@ class PyNessusPro:
         self.headers = {}
         self.folder_map = {}
         self.policy_map = {}
-        self.scans = []
+        self.scans = {}
         
         self.nessus_server = nessus_server if not self.nessus_server else self.nessus_server
         if not self.headers:
