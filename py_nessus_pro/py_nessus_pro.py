@@ -86,10 +86,10 @@ class PyNessusPro:
         if folder:
             if not folder in self.folder_map and create_folder:
                self.create_folder(folder)
-        scan = _Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, name=name, targets=targets, folder=folder)
-        if scan.id:
-            self.scans[scan.id] = scan
-        return scan
+        scan = _Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, 
+                    name=name, targets=targets, folder=folder)
+        self.scans[scan.id] = scan
+        return scan.id
     
     def list_scans(self):
         return [f"{scan_id} - {scan.get_name()}" for scan_id, scan in self.scans.items()]
@@ -153,7 +153,15 @@ class PyNessusPro:
     def post_scan(self, scan_id: int):
         if scan_id not in self.scans:
             raise ValueError(f"Scan ID {scan_id} not found")
-        return self.scans[scan_id].post()
+        
+        scan = self.scans[scan_id]
+        old_id = scan.id
+        new_id = scan.post() 
+        
+        if old_id != new_id:
+            self.scans[new_id] = self.scans.pop(old_id)
+            
+        return new_id
 
     def dump_scans(self):
         scans = []

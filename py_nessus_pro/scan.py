@@ -21,7 +21,9 @@ class _Scan():
     }
 
     def __init__(self, nessus_server: str, headers: dict, folder_map: dict, policy_map: dict, name: str = "", targets: str = "", id: str = "", folder: str = ""):
-        self.id = id
+        # Generate a temporary negative ID if no ID is provided
+        self.id = id if id else -int(datetime.now().timestamp())
+        self.is_posted = bool(id)
         self.metadata = json.loads('''{
             "uuid":"ab4bacd2-05f6-425c-9d79-3ba3940ad1c24e51e1f403febe40",
             "settings":{
@@ -162,12 +164,17 @@ class _Scan():
     def post(self):
         if not self.metadata["settings"]["text_targets"]:
             raise Exception("[!] No targets provided")
+        if self.is_posted:
+            raise Exception("[!] Scan already posted")
+            
         x = json.loads(requests.post(f"{self.nessus_server}/scans", headers=self.headers, json=self.metadata, verify=False).text)
         if self.metadata["settings"]["launch_now"]:
             logger.info("Scan launched: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
         else:
             logger.info("Scan saved: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
+        
         self.id = x["scan"]["id"]
+        self.is_posted = True
         return self.id
 
     def dump(self):
