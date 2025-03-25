@@ -53,7 +53,7 @@ class _Scan():
         self.metadata["settings"]["text_targets"] = targets
         self.metadata["settings"]["name"] = name
         self.metadata["settings"]["folder_id"] = self.folder_map[folder] if folder in self.folder_map else 0
-        logger.success("Scan object created: " + str(name) + " " + str(targets))
+        logger.debug("Scan object created: " + str(name) + " " + str(targets))
 
     def set_name(self, name: str):
         self.metadata["settings"]["name"] = name
