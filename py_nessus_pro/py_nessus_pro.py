@@ -16,7 +16,7 @@ class PyNessusPro:
     config = {}
     folder_map = {}
     policy_map = {}
-    scans = []
+    scans = {}
 
     def __init__(self, nessus_server: str, username: str, password: str, log_level: str = "warning"):
         self.nessus_server = nessus_server if not self.nessus_server else self.nessus_server
@@ -80,72 +80,90 @@ class PyNessusPro:
                 for scan in scans_list["scans"]:
                     if scan["folder_id"] != 2:
                         folder = next((key for key, value in self.folder_map.items() if value == scan["folder_id"]), None)
-                        self.scans.append(_Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, id = scan["id"], name = scan["name"], folder = folder))
+                        self.scans[scan["id"]] = _Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, id = scan["id"], name = scan["name"], folder = folder)
 
     def new_scan(self, name: str = "", targets: str = "", folder: str = "", create_folder: bool = True):
         if folder:
             if not folder in self.folder_map and create_folder:
                self.create_folder(folder)
-        self.scans.append(_Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, name = name, targets = targets, folder = folder))
-        logger.info("Created new scan")
-        return len(self.scans) - 1
+        scan = _Scan(self.nessus_server, self.headers, self.folder_map, self.policy_map, name=name, targets=targets, folder=folder)
+        if scan.id:
+            self.scans[scan.id] = scan
+        return scan
     
     def list_scans(self):
-        scans = []
-        for scan in self.scans:
-            scans.append(str(scan.id) + " - " + scan.get_name())
-        return scans
+        return [f"{scan_id} - {scan.get_name()}" for scan_id, scan in self.scans.items()]
     
     def get_scan_launch_ids(self):
-        ids = []
-        for scan in self.scans:
-            if scan.id:
-                ids.append(scan.id)
-        return ids
+        return list(self.scans.keys())
     
     def get_scan_ids(self):
-        return range(len(self.scans))
+        return list(self.scans.keys())
     
     def get_scan_metadata(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         return self.scans[scan_id].get_metadata()
     
     def get_scan_status(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         return self.scans[scan_id].get_status()
 
     def set_scan_name(self, scan_id: int, name: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_name(name)
 
     def set_scan_description(self, scan_id: int, description: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_description(description)
 
     def set_scan_folder(self, scan_id: int, folder: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_folder(folder)
 
     def set_scan_policy(self, scan_id: int, policy: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_policy(policy)
 
     def set_scan_target(self, scan_id: int, target: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_target(target)
 
     def set_scan_launch_now(self, scan_id: int, launch_now: bool):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_launch_now(launch_now)
 
     def set_scan_live_results(self, scan_id: int, live_results: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_live_results(live_results)
 
     def set_scan_program_scan(self, scan_id: int, enabled: bool, date: str):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         self.scans[scan_id].set_program_scan(enabled, date)
 
     def post_scan(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         return self.scans[scan_id].post()
 
     def dump_scans(self):
         scans = []
-        for scan in self.scans:
+        for scan in self.scans.values():
             scans.append(scan.dump())
         return scans
 
     def get_scan_reports(self, scan_id: int, path: str = ""):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
         return self.scans[scan_id].get_reports(path)
     
     def get_status_by_name(self, name: str):
@@ -178,7 +196,7 @@ class PyNessusPro:
     
     def search_scans(self, name: str = "", after: str = "", before: str = ""):
         results = []
-        for i, scan in enumerate(self.scans):
+        for scan_id, scan in self.scans.items():
             if name:
                 name = re.sub(r'(?<!\.)\*', '.*', name)
                 if re.compile(name, re.IGNORECASE).search(scan.get_name()):
@@ -188,24 +206,24 @@ class PyNessusPro:
                             if before:
                                 before_millis = datetime.strptime(before, "%Y-%m-%d_%H:%M:%S").timestamp()
                                 if before_millis > scan.get_status()["scan_start"]:
-                                    results.append(i)
+                                    results.append(scan_id)
                             else:
-                                results.append(i)
+                                results.append(scan_id)
                     else:
-                        results.append(i)
+                        results.append(scan_id)
             elif after:
                 after_millis = datetime.strptime(after, "%Y-%m-%d_%H:%M:%S").timestamp()
                 if after_millis < scan.get_status()["scan_start"]:
                     if before:
                         before_millis = datetime.strptime(before, "%Y-%m-%d_%H:%M:%S").timestamp()
                         if before_millis > scan.get_status()["scan_start"]:
-                            results.append(i)
+                            results.append(scan_id)
                     else:
-                        results.append(i)  
+                        results.append(scan_id)  
             elif before:
                 before_millis = datetime.strptime(before, "%Y-%m-%d_%H:%M:%S").timestamp()
                 if before_millis > scan.get_status()["scan_start"]:
-                    results.append(i)                 
+                    results.append(scan_id)                 
 
         return results
     

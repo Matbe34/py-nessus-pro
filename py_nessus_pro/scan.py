@@ -124,37 +124,51 @@ class _Scan():
         return self.metadata
         
     def get_status(self):
-        if self.id:
-            x = json.loads(requests.get(f"{self.nessus_server}/scans/{self.id}", headers=self.headers, verify=False).text)
-            res = {}
-            if x.get("info", None):
-                res["status"] = x["info"]["status"]
-                res["scan_start"] = x["info"].get("scan_start", None)
-                res["scan_end"] = x["info"].get("scan_end", None )
-                res["name"] = x["info"]["name"]
-                return res
-            else:
-                logger.error("Error retrieving scan status, check authorization issues or retry request.")
-                return {}
-        else:
-            logger.error("Scan not posted yet")
+        if not self.id:
             return {
-                "status":"scan not posted yet",
-                "scan_start":None,
-                "scan_end":None,
-                "name":self.metadata["settings"]["name"]
+                "status": "not_posted",
+                "scan_start": None,
+                "scan_end": None,
+                "name": self.metadata["settings"]["name"]
             }
+
+        response = requests.get(f"{self.nessus_server}/scans/{self.id}", headers=self.headers, verify=False)
+        if response.status_code != 200:
+            logger.error(f"Error getting scan status: {response.status_code}")
+            return {
+                "status": "error",
+                "scan_start": None,
+                "scan_end": None,
+                "name": self.metadata["settings"]["name"]
+            }
+
+        x = response.json()
+        if not x.get("info"):
+            logger.error("Error retrieving scan status, check authorization issues or retry request.")
+            return {
+                "status": "error",
+                "scan_start": None,
+                "scan_end": None,
+                "name": self.metadata["settings"]["name"]
+            }
+
+        return {
+            "status": x["info"]["status"],
+            "scan_start": x["info"].get("scan_start"),
+            "scan_end": x["info"].get("scan_end"),
+            "name": x["info"]["name"]
+        }
     
     def post(self):
         if not self.metadata["settings"]["text_targets"]:
             raise Exception("[!] No targets provided")
-        x = json.loads(requests.post(f"{self.nessus_server}/scans", headers=self.headers, json = self.metadata, verify=False).text)
+        x = json.loads(requests.post(f"{self.nessus_server}/scans", headers=self.headers, json=self.metadata, verify=False).text)
         if self.metadata["settings"]["launch_now"]:
             logger.info("Scan launched: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
         else:
             logger.info("Scan saved: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
         self.id = x["scan"]["id"]
-        return x["scan"]["id"]
+        return self.id
 
     def dump(self):
         return {
