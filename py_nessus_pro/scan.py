@@ -154,6 +154,7 @@ class _Scan():
         else:
             logger.info("Scan saved: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
         self.id = x["scan"]["id"]
+        return x["scan"]["id"]
 
     def dump(self):
         return {

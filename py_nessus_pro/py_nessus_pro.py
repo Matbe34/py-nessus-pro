@@ -137,7 +137,7 @@ class PyNessusPro:
         self.scans[scan_id].set_program_scan(enabled, date)
 
     def post_scan(self, scan_id: int):
-        self.scans[scan_id].post()
+        return self.scans[scan_id].post()
 
     def dump_scans(self):
         scans = []
