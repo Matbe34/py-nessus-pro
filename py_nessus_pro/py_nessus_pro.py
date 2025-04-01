@@ -169,6 +169,41 @@ class PyNessusPro:
             
         return new_id
 
+    def pause_scan(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
+        
+        # check if scan is running
+        if self.scans[scan_id].get_status()["status"] != "running":
+            raise ValueError(f"Scan ID {scan_id} is not running")
+
+        return self.scans[scan_id].pause()
+
+    def resume_scan(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
+        
+        # check if scan is paused
+        if self.scans[scan_id].get_status()["status"] != "paused":
+            raise ValueError(f"Scan ID {scan_id} is not paused")
+
+        return self.scans[scan_id].resume()
+
+    def stop_scan(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
+        
+        if self.scans[scan_id].get_status()["status"] not in ["running", "pending", "resuming"]:
+            raise ValueError(f"Scan ID {scan_id} is not running, pending or resuming")
+
+        return self.scans[scan_id].stop()
+
+    def force_stop_scan(self, scan_id: int):
+        if scan_id not in self.scans:
+            raise ValueError(f"Scan ID {scan_id} not found")
+        
+        return self.scans[scan_id].force_stop()
+
     def dump_scans(self):
         scans = []
         for scan in self.scans.values():

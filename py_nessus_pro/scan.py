@@ -177,6 +177,52 @@ class _Scan():
         self.is_posted = True
         return self.id
 
+    def pause(self):
+        if not self.id:
+            logger.error("Scan not posted yet")
+            return
+        if self.get_status()["status"] != "running":
+            logger.error("Scan not running")
+            return
+
+        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/pause", headers=self.headers, verify=False).text)
+        logger.info("Scan paused: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
+        return x["scan"]["id"]
+    
+    def resume(self):
+        if not self.id:
+            logger.error("Scan not posted yet")
+            return
+        if self.get_status()["status"] != "paused":
+            logger.error("Scan not paused")
+            return
+
+        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/resume", headers=self.headers, verify=False).text)
+        logger.info("Scan resumed: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
+        return x["scan"]["id"]
+
+    def stop(self):
+        if not self.id:
+            logger.error("Scan not posted yet")
+            return
+        
+        if self.get_status()["status"] not in ["running", "pending", "resuming"]:
+            logger.error("Scan not running, pending or resuming")
+            return
+
+        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/stop", headers=self.headers, verify=False).text)
+        logger.info("Scan stopped: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
+        return x["scan"]["id"]
+    
+    def force_stop(self):
+        if not self.id:
+            logger.error("Scan not posted yet")
+            return
+
+        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/force-stop", headers=self.headers, verify=False).text)
+        logger.info("Scan force stopped: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
+        return x["scan"]["id"]
+
     def dump(self):
         return {
             "id":self.id,
