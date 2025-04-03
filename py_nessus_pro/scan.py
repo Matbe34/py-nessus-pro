@@ -184,10 +184,12 @@ class _Scan():
         if self.get_status()["status"] != "running":
             logger.error("Scan not running")
             return
-
-        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/pause", headers=self.headers, verify=False).text)
-        logger.info("Scan paused: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
-        return x["scan"]["id"]
+        req = requests.post(f"{self.nessus_server}/scans/{self.id}/pause", headers=self.headers, verify=False)
+        if req.status_code != 200:
+            logger.error("Error pausing scan: " + str(req.status_code))
+            return
+        logger.info("Scan paused: " + str(self.id) + " (" + self.get_name() + ")")
+        return self.id
     
     def resume(self):
         if not self.id:
@@ -196,11 +198,13 @@ class _Scan():
         if self.get_status()["status"] != "paused":
             logger.error("Scan not paused")
             return
-
-        x = json.loads(requests.post(f"{self.nessus_server}/scans/{self.id}/resume", headers=self.headers, verify=False).text)
-        logger.info("Scan resumed: " + str(x["scan"]["id"]) + " (" + self.metadata["settings"]["name"] + ")")
-        return x["scan"]["id"]
-
+        req = requests.post(f"{self.nessus_server}/scans/{self.id}/resume", headers=self.headers, verify=False)
+        if req.status_code != 200:
+            logger.error("Error resuming scan: " + str(req.status_code))
+            return
+        logger.info("Scan resumed: " + str(self.id) + " (" + self.get_name() + ")")
+        return self.id
+    
     def stop(self):
         if not self.id:
             logger.error("Scan not posted yet")
