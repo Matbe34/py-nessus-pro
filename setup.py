@@ -11,7 +11,6 @@ setup(
          'requests',
          'loguru',
          'typer',
-         'typing',
     ],
     entry_points={
         'console_scripts': [
