@@ -1,0 +1,2 @@
+[console_scripts]
+py-nessus-pro = py_nessus_pro.py_nessus_pro_cli:app
