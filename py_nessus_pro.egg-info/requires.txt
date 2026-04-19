@@ -1,7 +1,0 @@
-selenium
-beautifulsoup4
-python-slugify
-requests
-loguru
-typer
-typing

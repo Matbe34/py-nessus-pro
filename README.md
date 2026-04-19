@@ -23,7 +23,7 @@ nessus_server = "https://nessus-server-url:8834"
 username = "admin"
 password = "password"
 
-nessus = PyNessus(nessus_server, username, password)
+nessus = PyNessusPro(nessus_server, username, password)
 ```
 
 Once you have created an instance of the `PyNessusPro` class, you can use its methods to perform various operations. For example, you can create a new scan by calling the `new_scan` method:

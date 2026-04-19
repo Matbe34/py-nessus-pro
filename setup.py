@@ -48,7 +48,7 @@ Create an instance
    nessus_server = "https://nessus-server-url:8834"
    username = "admin"
    password = "password"
-   nessus = PyNessus(nessus_server, username, password)
+   nessus = PyNessusPro(nessus_server, username, password)
 
 Launch a scan:
 
